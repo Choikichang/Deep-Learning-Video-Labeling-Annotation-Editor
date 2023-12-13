@@ -24,6 +24,15 @@ class VideoThread(QThread):
                 qt_img = self.convert_cv_qt(cv_img)
                 self.change_pixmap_signal.emit(qt_img)
 
+    def before_frame(self):
+        if self.cap.isOpened():
+            ret, cv_img = self.cap.read()
+            if ret:
+                self.frame_number -= 1
+                qt_img = self.convert_cv_qt(cv_img)
+                self.change_pixmap_signal.emit(qt_img)
+
+
     @staticmethod
     def convert_cv_qt(cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
