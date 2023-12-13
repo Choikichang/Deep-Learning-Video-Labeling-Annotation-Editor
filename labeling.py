@@ -43,14 +43,17 @@ class VideoThread(QThread):
                 self.video_current_frame_signal.emit(frame_number)
 
     def before_frame(self):
-        if self.cap.isOpened() and self.frame_number > 0:
+        if self.cap.isOpened() and self.frame_number > 1:
+            self.frame_number -= 2
+            # self.cap.read() going front so I need to set frame number once
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.frame_number)
             ret, cv_img = self.cap.read()
             if ret:
-                self.frame_number -= 1
+                self.frame_number += 1
                 qt_img = self.convert_cv_qt(cv_img)
                 self.change_pixmap_signal.emit(qt_img)
-                frame_number = self.frame_number
-                self.video_current_frame_signal.emit(frame_number)
+                # frame_number = self.frame_number
+                self.video_current_frame_signal.emit(self.frame_number)
 
     @staticmethod
     def convert_cv_qt(cv_img):
@@ -91,8 +94,8 @@ class App(QWidget):
         self.btn_next_frame.clicked.connect(self.next_frame)
 
         self.start_frame_input = QLineEdit(self)
-        self.end_frame_input = QLineEdit(self)
-        self.label_input = QLineEdit(self)
+        self.label_frame_count = QLineEdit(self)
+        self.label_frame_count.setText('60')
 
         self.btn_label = QPushButton('Label', self)
         self.btn_label.clicked.connect(self.label_video)
@@ -116,10 +119,8 @@ class App(QWidget):
         label_box = QHBoxLayout()
         label_box.addWidget(QLabel('Start Frame:'))
         label_box.addWidget(self.start_frame_input)
-        label_box.addWidget(QLabel('End Frame:'))
-        label_box.addWidget(self.end_frame_input)
-        label_box.addWidget(QLabel('Label:'))
-        label_box.addWidget(self.label_input)
+        label_box.addWidget(QLabel('Label Frame Count:'))
+        label_box.addWidget(self.label_frame_count)
         vbox.addLayout(label_box)
 
         vbox.addWidget(self.btn_label)
@@ -150,7 +151,6 @@ class App(QWidget):
                 video_path = self.video_paths[self.current_video_index]
                 self.video_filename = os.path.basename(video_path)
 
-
             else:
                 QMessageBox.warning(self, "Warning", "Selected video file is not in the list!")
         else:
@@ -162,9 +162,10 @@ class App(QWidget):
             self.thread.change_pixmap_signal.connect(self.update_image)
             self.thread.start()
 
+            # for video info file name update
+            video_path = self.video_paths[self.current_video_index]
+            self.video_filename = os.path.basename(video_path)
 
-
-            ### Add video info display
         else:
             QMessageBox.warning(self, "Warning", "Video file not found in the list!")
 
@@ -203,10 +204,19 @@ class App(QWidget):
         
     @pyqtSlot()
     def label_video(self):
-        start_frame = self.start_frame_input.text()
-        end_frame = self.end_frame_input.text()
-        label = self.label_input.text()
-        QMessageBox.information(self, "Info", f"Labeled from frame {start_frame} to {end_frame} with label {label}")
+        start_frame = int(self.start_frame_input.text())
+        frame_count = int(self.label_frame_count.text())
+        
+        labels = []
+        for frame in range(start_frame, start_frame + frame_count):
+            labels.append({"frame_number": frame, "label": 1})
+
+        # JSON 파일로 저장
+        label_data = {"video_name": self.video_filename, "labels": labels}
+        with open(f'{self.video_filename}.json', 'w') as file:
+            json.dump(label_data, file, indent=4)
+
+        QMessageBox.information(self, "Info", f"Labeled {frame_count} frames starting from frame {start_frame}")
     
 
     @pyqtSlot()
