@@ -164,6 +164,7 @@ class App(QWidget):
 
             # for video info file name update
             video_path = self.video_paths[self.current_video_index]
+            self.video_path = video_path
             self.video_filename = os.path.basename(video_path)
 
         else:
@@ -208,12 +209,18 @@ class App(QWidget):
         frame_count = int(self.label_frame_count.text())
         
         labels = []
+        for frame in range(start_frame-1):
+            labels.append({"frame_number": frame+1, "label": 0})
+
         for frame in range(start_frame, start_frame + frame_count):
             labels.append({"frame_number": frame, "label": 1})
+        total_frames = self.total_frames
+        for frame in range(start_frame + frame_count ,total_frames):
+            labels.append({"frame_number": frame+1, "label": 0})
 
         # JSON 파일로 저장
         label_data = {"video_name": self.video_filename, "labels": labels}
-        with open(f'{self.video_filename}.json', 'w') as file:
+        with open(f'{self.video_path}.json', 'w') as file:
             json.dump(label_data, file, indent=4)
 
         QMessageBox.information(self, "Info", f"Labeled {frame_count} frames starting from frame {start_frame}")
