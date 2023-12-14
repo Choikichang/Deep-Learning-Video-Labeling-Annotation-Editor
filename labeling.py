@@ -242,7 +242,7 @@ class App(QWidget):
             labels.append({"frame_number": frame, "label": 1})
         total_frames = self.total_frames
         for frame in range(start_frame + frame_count ,total_frames):
-            labels.append({"frame_number": frame+1, "label": 0})
+            labels.append({"frame_number": frame, "label": 0})
 
         # JSON 파일로 저장
         label_data = {"video_name": self.video_filename, "labels": labels}
