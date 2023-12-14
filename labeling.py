@@ -3,9 +3,10 @@ import cv2
 import json
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QFileDialog, QLineEdit, QHBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel,\
+     QFileDialog, QLineEdit, QHBoxLayout, QMessageBox, QShortcut
 from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QKeySequence
 
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(QImage)
@@ -99,6 +100,24 @@ class App(QWidget):
 
         self.btn_label = QPushButton('Label', self)
         self.btn_label.clicked.connect(self.label_video)
+
+
+        # Add Short cut key Q E I P O
+        
+        self.shortcut_before_frame = QShortcut(QKeySequence("Q"), self)
+        self.shortcut_before_frame.activated.connect(self.before_frame)
+
+        self.shortcut_next_frame = QShortcut(QKeySequence("E"), self)
+        self.shortcut_next_frame.activated.connect(self.next_frame)
+
+        self.shortcut_prev_video = QShortcut(QKeySequence("I"), self)
+        self.shortcut_prev_video.activated.connect(self.prev_video)
+
+        self.shortcut_next_video = QShortcut(QKeySequence("P"), self)
+        self.shortcut_next_video.activated.connect(self.next_video)
+
+        self.shortcut_label_video = QShortcut(QKeySequence("O"), self)
+        self.shortcut_label_video.activated.connect(self.label_video)
 
         # Set layout
         vbox = QVBoxLayout()
@@ -205,7 +224,14 @@ class App(QWidget):
         
     @pyqtSlot()
     def label_video(self):
-        start_frame = int(self.start_frame_input.text())
+
+
+        # If start_frame is blank then insert current frame number to start frame        
+        try:
+            start_frame = int(self.start_frame_input.text())
+        except ValueError:
+            start_frame = self.frame_number
+
         frame_count = int(self.label_frame_count.text())
         
         labels = []
