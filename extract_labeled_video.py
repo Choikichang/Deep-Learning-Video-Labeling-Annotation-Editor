@@ -38,14 +38,16 @@ def create_labeled_video(video_path, labels_path, output_path):
     out.release()
 
 root_folders = [
+    'C:\\Users\\Administrator\\kichang\\data\\original\\220624SlumpData',
+    # 'C:\\Users\\Administrator\\kichang\\data\\original\\220923_Additional_S120_S80',
     # 'C:\\Users\\Administrator\\kichang\\data\\original\\221007Cheonan-new400data',
-    'C:\\Users\\Administrator\\kichang\\data\\original\\221209_SeoSeoul_HopperVideo'
+    # 'C:\\Users\\Administrator\\kichang\\data\\original\\221209_SeoSeoul_HopperVideo'
 ]
 
 for main_folder in root_folders:
     # for the test
-    # for speed in ['S80']:
-    for speed in ['S80', 'S120', 'S150', 'S180']:
+    for speed in ['S80']: # just for fix error
+    # for speed in ['S80', 'S120', 'S150', 'S180']: 
 
         video_files = glob(os.path.join(main_folder, speed, '*.avi'))
 

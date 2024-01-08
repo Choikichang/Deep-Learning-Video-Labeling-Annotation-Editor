@@ -18,16 +18,20 @@ class VideoThread(QThread):
     def set_video_path(self, video_path):
         self.video_path = video_path
         self.cap = cv2.VideoCapture(self.video_path)
+        if not self.cap.isOpened():
+            print("Error: Unable to open video file.")
+            return
         self.frame_number = 0
-        # self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        # self.frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        # self.frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.video_total_frames_signal.emit(total_frames)
-        self.video_height_signal.emit(frame_height)
-        self.video_width_signal.emit(frame_width)
+        self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        # total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        # frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        # frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.video_total_frames_signal.emit(self.total_frames)
+        self.video_height_signal.emit(self.frame_height)
+        self.video_width_signal.emit(self.frame_width)
+
 
 # When Operate start show first frame!
     def run(self):
@@ -42,6 +46,9 @@ class VideoThread(QThread):
                 self.change_pixmap_signal.emit(qt_img)
                 frame_number = self.frame_number
                 self.video_current_frame_signal.emit(frame_number)
+                # self.video_total_frames_signal.emit(self.total_frames)
+                # self.video_height_signal.emit(self.frame_height)
+                # self.video_width_signal.emit(self.frame_width)
 
     def before_frame(self):
         if self.cap.isOpened() and self.frame_number > 1:
@@ -55,6 +62,11 @@ class VideoThread(QThread):
                 self.change_pixmap_signal.emit(qt_img)
                 # frame_number = self.frame_number
                 self.video_current_frame_signal.emit(self.frame_number)
+        
+    def stop(self):
+        self.cap.release()
+        self.quit()
+        self.wait()
 
     @staticmethod
     def convert_cv_qt(cv_img):
@@ -152,6 +164,7 @@ class App(QWidget):
         self.thread.video_current_frame_signal.connect(self.update_current_frame)
         self.thread.video_height_signal.connect(self.update_frame_height)
         self.thread.video_width_signal.connect(self.update_frame_width)
+        # print(self.thread.video_current_frame_signal)
 
 
     def select_video(self):
@@ -177,37 +190,52 @@ class App(QWidget):
 
     def load_video(self):
         if 0 <= self.current_video_index < len(self.video_paths):
-            self.thread.set_video_path(self.video_paths[self.current_video_index])
+        # Stop and release the previous thread if it exists
+            if hasattr(self, 'thread') and self.thread.isRunning():
+                self.thread.stop()
+                self.thread.wait()
+
+            self.thread = VideoThread()
+            
             self.thread.change_pixmap_signal.connect(self.update_image)
+            self.thread.video_total_frames_signal.connect(self.update_total_frames)
+            self.thread.video_current_frame_signal.connect(self.update_current_frame)
+            self.thread.video_height_signal.connect(self.update_frame_height)
+            self.thread.video_width_signal.connect(self.update_frame_width)
+            self.thread.set_video_path(self.video_paths[self.current_video_index])
             self.thread.start()
 
-            # for video info file name update
             video_path = self.video_paths[self.current_video_index]
             self.video_path = video_path
             self.video_filename = os.path.basename(video_path)
-
         else:
             QMessageBox.warning(self, "Warning", "Video file not found in the list!")
 
     def update_total_frames(self, total_frames):
         self.total_frames = total_frames
+        print(f"Total frames updated: {total_frames}")
         self.video_info_display()
 
     def update_current_frame(self, frame_number):
         self.frame_number = frame_number
+        print(f"Total frames updated: {frame_number}")
         self.video_info_display()
 
     def update_frame_height(self, frame_height):
         self.frame_height = frame_height
+        print(f"Total frames updated: {frame_height}")
         self.video_info_display()
 
     def update_frame_width(self, frame_width):
         self.frame_width = frame_width
+        print(f"Total frames updated: {frame_width}")
         self.video_info_display()
 
     def video_info_display(self):
         # 'self.video_filename'과 같은 다른 정보를 추가하기 전에 존재하는지 확인합니다.
-        video_info = f"Video name : {getattr(self, 'video_filename', 'Unknown')} Total frame : {getattr(self, 'total_frames', 'Unknown')} \n Current frame : {getattr(self, 'frame_number', 'Unknown')} Frame width : {getattr(self, 'frame_width', 'Unknown')} Frame height : {getattr(self, 'frame_height', 'Unknown')}"
+        video_info = f"Video name : {getattr(self, 'video_filename', 'Unknown')}\
+ Total frame : {getattr(self, 'total_frames', 'Unknown')} \n Current frame : {getattr(self, 'frame_number', 'Unknown')}\
+ Frame width : {getattr(self, 'frame_width', 'Unknown')} Frame height : {getattr(self, 'frame_height', 'Unknown')}"
         self.video_info_label.setText(video_info)
 
     @pyqtSlot(QImage)
@@ -254,12 +282,14 @@ class App(QWidget):
 
     @pyqtSlot()
     def prev_video(self):
+
         if self.current_video_index > 0:
             self.current_video_index -= 1
             self.load_video()
 
     @pyqtSlot()
     def next_video(self):
+
         if self.current_video_index < len(self.video_paths) - 1:
             self.current_video_index += 1
             self.load_video()

@@ -29,8 +29,10 @@ def make_uniform_frames(video_path, output_path, target_frames=48):
     out.release()
 
 root_folders = [
-    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221007Cheonan-new400data',
-    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221209_SeoSeoul_HopperVideo'
+    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\220624SlumpData',
+    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\220923_Additional_S120_S80',
+    # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221007Cheonan-new400data',
+    # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221209_SeoSeoul_HopperVideo'
 ]
 
 for main_folder in root_folders:
@@ -47,5 +49,6 @@ for main_folder in root_folders:
                 output_video_path = os.sep.join(output_video_path)
                 output_video = f"{output_video_path}_48frame_extracted.avi"
                 make_uniform_frames(video_file, output_video)
+                print("Successfully saved!!")
             else:
                 print(f"Labels file not found for {video_file}")
