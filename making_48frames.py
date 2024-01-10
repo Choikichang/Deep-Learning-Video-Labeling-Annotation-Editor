@@ -29,14 +29,15 @@ def make_uniform_frames(video_path, output_path, target_frames=48):
     out.release()
 
 root_folders = [
-    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\220624SlumpData',
-    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\220923_Additional_S120_S80',
+    # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\220624SlumpData',
+    # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\220923_Additional_S120_S80',
     # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221007Cheonan-new400data',
-    # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221209_SeoSeoul_HopperVideo'
+    # 'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\221209_SeoSeoul_HopperVideo',
+    'C:\\Users\\Administrator\\kichang\\data\\preprocessing\\labeling_trim\\240104_SeoSeoul'
 ]
 
 for main_folder in root_folders:
-    for speed in ['S80', 'S120', 'S150', 'S180']:
+    for speed in ['S80', 'S120', 'S150', 'S180', 'S210']:
         video_files = glob(os.path.join(main_folder, speed, '*.avi'))
 
         for video_file in video_files:

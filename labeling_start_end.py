@@ -107,8 +107,8 @@ class App(QWidget):
         self.btn_next_frame.clicked.connect(self.next_frame)
 
         self.start_frame_input = QLineEdit(self)
-        self.label_frame_count = QLineEdit(self)
-        self.label_frame_count.setText('60')
+        self.end_frame_input = QLineEdit(self)
+        # self.label_frame_count.setText('60')
 
         self.btn_label = QPushButton('Label', self)
         self.btn_label.clicked.connect(self.label_video)
@@ -131,6 +131,15 @@ class App(QWidget):
         self.shortcut_label_video = QShortcut(QKeySequence("O"), self)
         self.shortcut_label_video.activated.connect(self.label_video)
 
+        # Add Short cut key K and L
+        self.shortcut_set_start_frame = QShortcut(QKeySequence("K"), self)
+        self.shortcut_set_start_frame.activated.connect(self.set_start_frame)
+
+        self.shortcut_set_end_frame = QShortcut(QKeySequence("L"), self)
+        self.shortcut_set_end_frame.activated.connect(self.set_end_frame)
+
+
+
         # Set layout
         vbox = QVBoxLayout()
         vbox.addWidget(self.image_label)
@@ -150,8 +159,8 @@ class App(QWidget):
         label_box = QHBoxLayout()
         label_box.addWidget(QLabel('Start Frame:'))
         label_box.addWidget(self.start_frame_input)
-        label_box.addWidget(QLabel('Label Frame Count:'))
-        label_box.addWidget(self.label_frame_count)
+        label_box.addWidget(QLabel('End Frame:'))
+        label_box.addWidget(self.end_frame_input)
         vbox.addLayout(label_box)
 
         vbox.addWidget(self.btn_label)
@@ -251,33 +260,40 @@ class App(QWidget):
         self.thread.next_frame()
         
     @pyqtSlot()
+    def set_start_frame(self):
+        self.start_frame_input.setText(str(self.frame_number))
+
+    @pyqtSlot()
+    def set_end_frame(self):
+        self.end_frame_input.setText(str(self.frame_number))
+
+    @pyqtSlot()
     def label_video(self):
-
-
-        # If start_frame is blank then insert current frame number to start frame        
         try:
             start_frame = int(self.start_frame_input.text())
+            end_frame = int(self.end_frame_input.text())
         except ValueError:
-            start_frame = self.frame_number
+            QMessageBox.warning(self, "Warning", "Invalid start or end frame!")
+            return
 
-        frame_count = int(self.label_frame_count.text())
-        
         labels = []
         for frame in range(start_frame-1):
             labels.append({"frame_number": frame+1, "label": 0})
 
-        for frame in range(start_frame, start_frame + frame_count):
+        for frame in range(start_frame, end_frame+1):
             labels.append({"frame_number": frame, "label": 1})
+
         total_frames = self.total_frames
-        for frame in range(start_frame + frame_count ,total_frames):
+        for frame in range(end_frame+1, total_frames):
             labels.append({"frame_number": frame, "label": 0})
+
 
         # JSON 파일로 저장
         label_data = {"video_name": self.video_filename, "labels": labels}
         with open(f'{self.video_path}.json', 'w') as file:
             json.dump(label_data, file, indent=4)
 
-        QMessageBox.information(self, "Info", f"Labeled {frame_count} frames starting from frame {start_frame}")
+        QMessageBox.information(self, "Info", f"Labeled from {start_frame} to {end_frame} total number of frame is {end_frame - start_frame}")
     
 
     @pyqtSlot()
